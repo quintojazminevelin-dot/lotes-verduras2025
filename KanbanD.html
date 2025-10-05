@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Kanban Digital - Escaner de Lotes</title>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<style>
+body { font-family: Arial, sans-serif; background:#f0f0f0; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; }
+.container { background:#fff; padding:20px; border-radius:10px; width:320px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.2); }
+h2 { margin-bottom:10px; }
+.estado-🟢 { color: #2ecc71; font-weight:bold; font-size:1.2em; }
+.estado-🟡 { color: #f1c40f; font-weight:bold; font-size:1.2em; }
+.estado-🟠 { color: #e67e22; font-weight:bold; font-size:1.2em; }
+#reader { margin: 15px auto; }
+</style>
+</head>
+<body>
+<div class="container">
+    <h2>Escanea el QR del lote</h2>
+    <div id="reader"></div>
+    <div id="resultado"></div>
+</div>
+
+<script>
+// Nuevo URL de tu Web App de Apps Script
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwH5-WQnlk4o5XqA6VpqFb3lMQBm8iPF98RMzuT0EDrCTBb3g-gCD8C9nqpVSawwqdb/exec";
+
+// Función que se ejecuta al leer un QR
+function onScanSuccess(decodedText, decodedResult) {
+    const id = decodedText.trim(); // El QR debe contener solo el ID del lote, ej: G001-1
+    fetch(`${WEB_APP_URL}?id=${id}`)
+        .then(res => res.json())
+        .then(lote => {
+            document.getElementById('resultado').innerHTML = `
+                <h2>Lote ${lote.ID}</h2>
+                <p><strong>Producto:</strong> ${lote.Producto}</p>
+                <p><strong>Cantidad Pedida:</strong> ${lote.CantidadPedida}</p>
+                <p><strong>Tienda:</strong> ${lote.Tienda}</p>
+                <p><strong>Tiempo en almacén:</strong> ${lote.HorasTranscurridas} h</p>
+                <p><strong>Estado:</strong> <span class="estado-${lote.Estado.charAt(0)}">${lote.Estado}</span></p>
+            `;
+        })
+        .catch(err => {
+            document.getElementById('resultado').innerHTML = "<p>Lote no encontrado o error</p>";
+            console.error(err);
+        });
+}
+
+// Inicializar lector QR con cámara trasera
+let html5QrcodeScanner = new Html5Qrcode("reader");
+html5QrcodeScanner.start(
+    { facingMode: "environment" }, 
+    { fps: 10, qrbox: 250 }, 
+    onScanSuccess
+);
+</script>
+</body>
+</html>
